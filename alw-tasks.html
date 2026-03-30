@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="ALW Tasks"/>
+  <meta name="theme-color" content="#fdf6ec"/>
+  <title>ALW Task Board</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{margin:0;padding:0;background:linear-gradient(160deg,#fdf6ec 0%,#f5ede0 100%);min-height:100vh;font-family:'IBM Plex Mono',monospace;}
+    input,textarea,select,button{outline:none;font-family:'IBM Plex Mono',monospace;}
+    input:focus,textarea:focus,select:focus{border-color:#8b5e3c!important;}
+    ::placeholder{color:#b0a090;}
+    @keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+    @keyframes toastin{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+    .te{animation:fadein 0.2s ease}
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect } = React;
+const LOGO_URL = "data:image/png;base64,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";
+const PRIORITIES = ["Critical","High","Normal","Low"];
+const STATUSES = ["To Do","In Progress","Blocked","Done"];
+const PC = {
+  Critical:{bg:"#f5e6d3",text:"#8b2500",border:"#c4724a"},
+  High:{bg:"#faf0e0",text:"#7a4a00",border:"#c49a4a"},
+  Normal:{bg:"#f0ece4",text:"#3a4a2a",border:"#8a9a7a"},
+  Low:{bg:"#f5f2ec",text:"#5a6a5a",border:"#b0b89a"},
+};
+const SC = {"To Do":"#9a8a7a","In Progress":"#5a7a9a","Blocked":"#9a3a2a","Done":"#4a7a4a"};
+const STORAGE_KEY = "alw_tasks_v4";
+
+function loadTasks(){try{const r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):[]}catch{return[]}}
+function saveTasks(t){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(t))}catch{}}
+let _id=Date.now();
+const uid=()=>`t_${_id++}`;
+function formatDate(iso){if(!iso)return"";return new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}
+function daysUntil(iso){if(!iso)return null;const t=new Date();t.setHours(0,0,0,0);return Math.ceil((new Date(iso+"T00:00:00")-t)/86400000)}
+
+function DueBadge({iso}){
+  if(!iso)return null;
+  const d=daysUntil(iso);
+  let color="#4a7a4a",label=`Due ${formatDate(iso)}`;
+  if(d<0){color="#9a3a2a";label=`Overdue ${Math.abs(d)}d`}
+  else if(d===0){color="#8a6000";label="Due Today"}
+  else if(d<=3){color="#8a6000";label=`Due in ${d}d`}
+  return <span style={{fontSize:11,color,fontFamily:"monospace",marginLeft:6}}>{label}</span>;
+}
+
+async function callClaude(prompt){
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+    });
+    if(!res.ok)throw new Error();
+    const data=await res.json();
+    const text=data.content?.find(b=>b.type==="text")?.text||"";
+    return JSON.parse(text.replace(/```json|```/g,"").trim());
+  }catch{return null}
+}
+
+function AIPanel({task,onClose,onApplySteps}){
+  const [loading,setLoading]=useState(true);
+  const [result,setResult]=useState(null);
+  useEffect(()=>{
+    (async()=>{
+      const prompt=`You are a project coordinator for Architectural Leather Works (ALW), a specialty leather fabrication company.
+Task: "${task.title}" | Priority: ${task.priority} | Status: ${task.status}
+${task.notes?`Notes: ${task.notes}`:""}${task.due?` | Due: ${task.due}`:""}
+Return ONLY valid JSON: {"summary":"one sentence","nextSteps":["step 1","step 2","step 3","step 4"],"watchOut":"key risk","estimatedHours":number}`;
+      const data=await callClaude(prompt);
+      setResult(data||{summary:`Coordinate and execute: ${task.title}`,nextSteps:["Confirm scope and materials needed","Assign responsible party and checkpoint","Execute primary work and document progress","Review and close out task"],watchOut:"Verify all dependencies before starting",estimatedHours:3});
+      setLoading(false);
+    })();
+  },[]);
+  const steps=result?.nextSteps||[];
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(60,40,20,0.45)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:"#fdf8f0",border:"1.5px solid #c4a882",borderRadius:14,width:"100%",maxWidth:500,maxHeight:"85vh",overflowY:"auto",padding:28,position:"relative",boxShadow:"0 8px 40px rgba(100,60,20,0.18)"}}>
+        <button onClick={onClose} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:"#9a8a7a",fontSize:20,cursor:"pointer"}}>✕</button>
+        <div style={{fontSize:10,color:"#8b5e3c",letterSpacing:3,marginBottom:4}}>ALW · AI ASSIST</div>
+        <div style={{fontSize:14,color:"#2a1a0a",marginBottom:18,lineHeight:1.4,fontWeight:500}}>{task.title}</div>
+        {loading&&<div style={{color:"#9a8a7a",fontSize:13,fontStyle:"italic"}}>◌ Analyzing...</div>}
+        {result&&(<>
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:10,color:"#b0a090",letterSpacing:2,marginBottom:5}}>SUMMARY</div>
+            <div style={{fontSize:13,color:"#3a2a1a",lineHeight:1.6}}>{result.summary}</div>
+          </div>
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:10,color:"#b0a090",letterSpacing:2,marginBottom:8}}>NEXT STEPS</div>
+            {steps.map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:10,marginBottom:7,fontSize:12,color:"#3a2a1a",lineHeight:1.5}}>
+                <span style={{color:"#8b5e3c",flexShrink:0}}>→</span>{s}
+              </div>
+            ))}
+          </div>
+          <div style={{background:"#fdf0e0",border:"1px solid #c49a4a",borderRadius:8,padding:"10px 14px",marginBottom:14}}>
+            <div style={{fontSize:10,color:"#8a6000",letterSpacing:2,marginBottom:4}}>⚠ WATCH OUT</div>
+            <div style={{fontSize:12,color:"#4a3a1a"}}>{result.watchOut}</div>
+          </div>
+          {result.estimatedHours&&<div style={{fontSize:11,color:"#b0a090",marginBottom:16}}>Est. ~{result.estimatedHours}h</div>}
+          <button onClick={()=>{onApplySteps(steps);onClose();}} style={{background:"#8b5e3c",border:"none",color:"#fdf8f0",borderRadius:7,padding:"9px 18px",cursor:"pointer",fontSize:12,letterSpacing:1}}>+ ADD AS SUBTASKS</button>
+        </>)}
+      </div>
+    </div>
+  );
+}
+
+function BatchImportPanel({onClose,onImport}){
+  const [text,setText]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [preview,setPreview]=useState(null);
+  const todayISO=new Date().toISOString().slice(0,10);
+  const tomorrowISO=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  const nextWeekISO=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
+  function nextWeekday(name){const days=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];const idx=days.indexOf(name.toLowerCase());if(idx<0)return"";const d=new Date();d.setHours(0,0,0,0);const diff=(idx-d.getDay()+7)%7||7;d.setDate(d.getDate()+diff);return d.toISOString().slice(0,10);}
+  async function parse(){
+    if(!text.trim())return;
+    setLoading(true);setPreview(null);
+    const prompt=`Parse the following into individual tasks for Architectural Leather Works (ALW).
+For each task return: title (short), priority ("Critical"/"High"/"Normal"/"Low"), status ("To Do"), due (YYYY-MM-DD or ""), notes (extra context or "").
+Date references: today=${todayISO}, tomorrow=${tomorrowISO}, next week=${nextWeekISO}, friday=${nextWeekday("friday")}, monday=${nextWeekday("monday")}, thursday=${nextWeekday("thursday")}.
+Return ONLY a JSON array, no markdown: [{"title":"","priority":"","status":"To Do","due":"","notes":""}]
+Text: "${text}"`;
+    const data=await callClaude(prompt);
+    if(data&&Array.isArray(data)){setPreview(data);}
+    else{const lines=text.split(/[.!?\n]+/).map(s=>s.trim()).filter(s=>s.length>8);setPreview(lines.slice(0,5).map(line=>({title:line.slice(0,60),priority:"Normal",status:"To Do",due:"",notes:""})));}
+    setLoading(false);
+  }
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(60,40,20,0.45)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:"#fdf8f0",border:"1.5px solid #c4a882",borderRadius:14,width:"100%",maxWidth:540,maxHeight:"85vh",overflowY:"auto",padding:28,position:"relative",boxShadow:"0 8px 40px rgba(100,60,20,0.18)"}}>
+        <button onClick={onClose} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:"#9a8a7a",fontSize:20,cursor:"pointer"}}>✕</button>
+        <div style={{fontSize:10,color:"#8b5e3c",letterSpacing:3,marginBottom:4}}>BATCH IMPORT</div>
+        <div style={{fontSize:14,color:"#2a1a0a",fontWeight:500,marginBottom:6}}>Dictate or paste tasks</div>
+        <div style={{fontSize:11,color:"#9a8a7a",marginBottom:16,lineHeight:1.7}}>Brain-dump multiple tasks at once. Claude parses them into individual cards.</div>
+        {!preview&&(<>
+          <textarea value={text} onChange={e=>setText(e.target.value)} rows={5}
+            placeholder={'e.g. "Call freight company about 767 Fifth shipment, critical, due Friday. Order leather samples for Chicago, high priority next week."'}
+            style={{width:"100%",background:"#fff",border:"1.5px solid #d4c4b0",color:"#2a1a0a",borderRadius:8,padding:"10px 12px",fontSize:12,resize:"vertical",marginBottom:14,boxSizing:"border-box"}}/>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={parse} disabled={!text.trim()||loading} style={{background:text.trim()&&!loading?"#8b5e3c":"#d4c4b0",border:"none",color:"#fdf8f0",borderRadius:7,padding:"9px 20px",cursor:text.trim()&&!loading?"pointer":"default",fontSize:12,letterSpacing:1}}>{loading?"◌ Parsing...":"PARSE TASKS"}</button>
+            <button onClick={onClose} style={{background:"none",border:"1.5px solid #d4c4b0",color:"#9a8a7a",borderRadius:7,padding:"9px 14px",cursor:"pointer",fontSize:12}}>CANCEL</button>
+          </div>
+        </>)}
+        {preview&&(<>
+          <div style={{fontSize:10,color:"#4a7a4a",letterSpacing:2,marginBottom:12}}>✓ {preview.length} TASKS READY</div>
+          {preview.map((t,i)=>(
+            <div key={i} style={{background:"white",border:`1.5px solid ${PC[t.priority]?.border||"#d4c4b0"}`,borderRadius:9,padding:"10px 14px",marginBottom:8}}>
+              <div style={{fontSize:13,color:"#2a1a0a",fontWeight:500,marginBottom:4}}>{t.title}</div>
+              <div style={{display:"flex",gap:12,fontSize:11,color:"#9a8a7a",flexWrap:"wrap"}}>
+                <span style={{color:PC[t.priority]?.text}}>{t.priority}</span>
+                {t.due&&<span>Due {formatDate(t.due)}</span>}
+                {t.notes&&<span style={{color:"#b0a090",fontStyle:"italic"}}>{t.notes}</span>}
+              </div>
+            </div>
+          ))}
+          <div style={{display:"flex",gap:8,marginTop:16}}>
+            <button onClick={()=>{onImport(preview.map(t=>({...t,id:uid(),subtasks:[]})));onClose();}} style={{background:"#8b5e3c",border:"none",color:"#fdf8f0",borderRadius:7,padding:"9px 20px",cursor:"pointer",fontSize:12,letterSpacing:1}}>ADD {preview.length} TASKS</button>
+            <button onClick={()=>setPreview(null)} style={{background:"none",border:"1.5px solid #d4c4b0",color:"#9a8a7a",borderRadius:7,padding:"9px 14px",cursor:"pointer",fontSize:12}}>← EDIT</button>
+          </div>
+        </>)}
+      </div>
+    </div>
+  );
+}
+
+function TaskForm({initial,onSave,onCancel}){
+  const [form,setForm]=useState(initial||{title:"",priority:"Normal",status:"To Do",due:"",notes:""});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const inp={background:"#fff",border:"1.5px solid #d4c4b0",color:"#2a1a0a",borderRadius:7,padding:"9px 12px",fontSize:14,width:"100%",boxSizing:"border-box"};
+  const sel={background:"#fff",border:"1.5px solid #d4c4b0",color:"#3a2a1a",borderRadius:7,padding:"8px 10px",fontSize:12};
+  return(
+    <div style={{background:"#fdf8f0",border:"1.5px solid #c4a882",borderRadius:12,padding:20,marginBottom:16,boxShadow:"0 2px 12px rgba(100,60,20,0.08)"}}>
+      <input placeholder="Task title..." value={form.title} onChange={e=>set("title",e.target.value)} style={{...inp,marginBottom:12}}/>
+      <div style={{display:"flex",gap:10,marginBottom:12,flexWrap:"wrap"}}>
+        <select value={form.priority} onChange={e=>set("priority",e.target.value)} style={sel}>{PRIORITIES.map(p=><option key={p}>{p}</option>)}</select>
+        <select value={form.status} onChange={e=>set("status",e.target.value)} style={sel}>{STATUSES.map(s=><option key={s}>{s}</option>)}</select>
+        <input type="date" value={form.due} onChange={e=>set("due",e.target.value)} style={sel}/>
+      </div>
+      <textarea placeholder="Notes, context, links..." value={form.notes} onChange={e=>set("notes",e.target.value)} rows={2} style={{...inp,resize:"vertical",marginBottom:12}}/>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={()=>form.title.trim()&&onSave(form)} style={{background:"#8b5e3c",border:"none",color:"#fdf8f0",borderRadius:7,padding:"8px 18px",cursor:"pointer",fontSize:12,letterSpacing:1}}>SAVE</button>
+        <button onClick={onCancel} style={{background:"none",border:"1.5px solid #d4c4b0",color:"#9a8a7a",borderRadius:7,padding:"8px 14px",cursor:"pointer",fontSize:12}}>CANCEL</button>
+      </div>
+    </div>
+  );
+}
+
+function TaskCard({task,onUpdate,onDelete,onAI}){
+  const [expanded,setExpanded]=useState(false);
+  const [editing,setEditing]=useState(false);
+  const pc=PC[task.priority];
+  const done=task.status==="Done";
+  if(editing)return <TaskForm initial={task} onSave={t=>{onUpdate({...task,...t});setEditing(false);}} onCancel={()=>setEditing(false)}/>;
+  return(
+    <div style={{background:done?"#f5f2ec":pc.bg,border:`1.5px solid ${done?"#d4c9b8":pc.border}`,borderRadius:11,marginBottom:10,overflow:"hidden",boxShadow:done?"none":"0 2px 10px rgba(100,60,20,0.07)"}}>
+      <div onClick={()=>setExpanded(e=>!e)} style={{padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+        <button onClick={e=>{e.stopPropagation();const i=STATUSES.indexOf(task.status);onUpdate({...task,status:STATUSES[(i+1)%STATUSES.length]});}} style={{width:22,height:22,borderRadius:"50%",flexShrink:0,background:done?"#e8f0e8":"white",border:`2px solid ${SC[task.status]}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          {done&&<span style={{color:"#4a7a4a",fontSize:11,fontWeight:700}}>✓</span>}
+        </button>
+        <span style={{flex:1,fontSize:14,color:done?"#a09080":"#2a1a0a",textDecoration:done?"line-through":"none",fontWeight:done?400:500}}>{task.title}</span>
+        <span style={{fontSize:10,color:pc.text,background:"white",border:`1px solid ${pc.border}`,borderRadius:4,padding:"2px 7px",fontFamily:"monospace",flexShrink:0}}>{task.priority}</span>
+        <span style={{fontSize:10,color:SC[task.status],fontFamily:"monospace",flexShrink:0}}>{task.status}</span>
+        <DueBadge iso={task.due}/>
+        <span style={{color:"#c4a882",fontSize:11,flexShrink:0}}>{expanded?"▲":"▼"}</span>
+      </div>
+      {expanded&&(
+        <div style={{padding:"0 16px 14px",borderTop:`1px solid ${pc.border}`}}>
+          {task.notes&&<div style={{fontSize:12,color:"#7a6a5a",marginTop:10,lineHeight:1.7,fontFamily:"monospace"}}>{task.notes}</div>}
+          {task.subtasks?.length>0&&(
+            <div style={{marginTop:12}}>
+              <div style={{fontSize:10,color:"#b0a090",letterSpacing:2,marginBottom:6}}>SUBTASKS</div>
+              {task.subtasks.map((s,i)=>{
+                const sub=[...(task.subtasks||[])];
+                return(<div key={i} onClick={()=>{sub[i]={...sub[i],done:!sub[i].done};onUpdate({...task,subtasks:sub});}} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:6,fontSize:12,fontFamily:"monospace",color:s.done?"#b0a090":"#3a2a1a",textDecoration:s.done?"line-through":"none"}}>
+                  <span style={{color:s.done?"#4a7a4a":"#c4a882"}}>{s.done?"✓":"○"}</span>{s.text}
+                </div>);
+              })}
+            </div>
+          )}
+          <div style={{display:"flex",gap:8,marginTop:14,flexWrap:"wrap"}}>
+            <button onClick={()=>onAI(task)} style={{background:"#8b5e3c",border:"none",color:"#fdf8f0",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontSize:11,fontFamily:"monospace",letterSpacing:1}}>⚡ AI ASSIST</button>
+            <button onClick={()=>setEditing(true)} style={{background:"none",border:"1.5px solid #d4c4b0",color:"#7a6a5a",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:11,fontFamily:"monospace"}}>EDIT</button>
+            <button onClick={()=>onDelete(task.id)} style={{background:"none",border:"1.5px solid #e0c4b8",color:"#c07060",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:11,fontFamily:"monospace"}}>DEL</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotifBell({tasks}){
+  const [perm,setPerm]=useState(()=>{try{return Notification?.permission||"default"}catch{return"default"}});
+  async function enable(){
+    try{
+      if(!("Notification"in window))return;
+      const r=await Notification.requestPermission();
+      setPerm(r);
+      if(r==="granted"){
+        tasks.filter(t=>t.due&&t.status!=="Done").forEach(t=>{
+          const d=daysUntil(t.due);
+          if(d===0)new Notification("ALW — Due Today",{body:t.title,tag:t.id});
+          if(d===1){const fire=new Date(t.due+"T08:00:00");const delay=fire-Date.now();if(delay>0)setTimeout(()=>new Notification("ALW — Due Tomorrow",{body:t.title,tag:t.id}),delay);}
+        });
+      }
+    }catch{}
+  }
+  const on=perm==="granted",denied=perm==="denied";
+  return(
+    <button onClick={on||denied?undefined:enable} style={{background:"white",border:`1.5px solid ${on?"#4a7a4a":denied?"#d4c4b0":"#c4a882"}`,color:on?"#4a7a4a":denied?"#b0a090":"#8b5e3c",borderRadius:7,padding:"5px 12px",cursor:on||denied?"default":"pointer",fontSize:10,display:"flex",alignItems:"center",gap:5,letterSpacing:1}}>
+      <span>{on?"🔔":"🔕"}</span><span>{on?"REMINDERS ON":"REMINDERS"}</span>
+    </button>
+  );
+}
+
+function App(){
+  const [tasks,setTasks]=useState(()=>loadTasks());
+  const [adding,setAdding]=useState(false);
+  const [importing,setImporting]=useState(false);
+  const [aiTarget,setAiTarget]=useState(null);
+  const [filter,setFilter]=useState("Active");
+  const [toast,setToast]=useState("");
+  useEffect(()=>{saveTasks(tasks);},[tasks]);
+  function showToast(msg){setToast(msg);setTimeout(()=>setToast(""),2500);}
+  function addTask(f){setTasks(p=>[...p,{id:uid(),subtasks:[],...f}]);setAdding(false);}
+  function importTasks(arr){setTasks(p=>[...p,...arr]);showToast(`✓ ${arr.length} task${arr.length>1?"s":""} imported`);}
+  function updateTask(u){setTasks(t=>t.map(x=>x.id===u.id?u:x));}
+  function deleteTask(id){setTasks(t=>t.filter(x=>x.id!==id));}
+  function applySteps(task,steps){updateTask({...task,subtasks:[...(task.subtasks||[]),...steps.map(s=>({text:s,done:false}))]});}
+  const filtered=filter==="All"?tasks:filter==="Active"?tasks.filter(t=>t.status!=="Done"):tasks.filter(t=>t.status===filter);
+  const counts={total:tasks.length,done:tasks.filter(t=>t.status==="Done").length,blocked:tasks.filter(t=>t.status==="Blocked").length};
+  return(
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#fdf6ec 0%,#f5ede0 100%)",padding:"24px 18px",maxWidth:680,margin:"0 auto"}}>
+      {toast&&<div style={{position:"fixed",bottom:22,left:"50%",transform:"translateX(-50%)",background:"#2a1a0a",color:"#fdf8f0",borderRadius:8,padding:"10px 22px",fontSize:13,fontFamily:"monospace",zIndex:9999,animation:"toastin 0.2s ease",whiteSpace:"nowrap"}}>{toast}</div>}
+      <div style={{marginBottom:22}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <img src={LOGO_URL} alt="ALW" style={{height:50,width:"auto",objectFit:"contain"}}/>
+          <div style={{marginLeft:4}}>
+            <div style={{fontSize:20,color:"#2a1a0a",fontWeight:600,letterSpacing:-0.5}}>Task Board</div>
+          </div>
+          <div style={{marginLeft:"auto"}}><NotifBell tasks={tasks}/></div>
+        </div>
+        <div style={{display:"flex",gap:16,marginTop:10,paddingLeft:4}}>
+          {[{l:"tasks",v:counts.total,c:"#7a6a5a"},{l:"done",v:counts.done,c:"#4a7a4a"},{l:"blocked",v:counts.blocked,c:"#9a3a2a"}].map(s=>(
+            <div key={s.l} style={{fontSize:12}}><span style={{color:s.c,fontWeight:600}}>{s.v}</span><span style={{color:"#b0a090"}}> {s.l}</span></div>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+        {["Active","All","To Do","In Progress","Blocked","Done"].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)} style={{background:filter===f?"#8b5e3c":"white",border:`1.5px solid ${filter===f?"#8b5e3c":"#d4c4b0"}`,color:filter===f?"#fdf8f0":"#7a6a5a",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:10,letterSpacing:1}}>{f.toUpperCase()}</button>
+        ))}
+        <div style={{marginLeft:"auto",display:"flex",gap:8}}>
+          <button onClick={()=>setImporting(true)} style={{background:"white",border:"1.5px solid #c4a882",color:"#8b5e3c",borderRadius:7,padding:"6px 13px",cursor:"pointer",fontSize:11,letterSpacing:1}}>⚡ IMPORT</button>
+          <button onClick={()=>setAdding(true)} style={{background:"#8b5e3c",border:"none",color:"#fdf8f0",borderRadius:7,padding:"6px 14px",cursor:"pointer",fontSize:11,letterSpacing:1,boxShadow:"0 2px 8px rgba(139,94,60,0.2)"}}>+ NEW</button>
+        </div>
+      </div>
+      {adding&&<TaskForm onSave={addTask} onCancel={()=>setAdding(false)}/>}
+      {filtered.length===0&&!adding&&(
+        <div style={{color:"#c4b4a4",fontSize:13,textAlign:"center",marginTop:50,lineHeight:2.2}}>No tasks here.<br/><span style={{fontSize:11}}>Tap + NEW or ⚡ IMPORT to get started.</span></div>
+      )}
+      {filtered.map(task=>(
+        <div key={task.id} className="te">
+          <TaskCard task={task} onUpdate={updateTask} onDelete={deleteTask} onAI={setAiTarget}/>
+        </div>
+      ))}
+      {aiTarget&&<AIPanel task={aiTarget} onClose={()=>setAiTarget(null)} onApplySteps={steps=>{applySteps(aiTarget,steps);setAiTarget(null);}}/>}
+      {importing&&<BatchImportPanel onClose={()=>setImporting(false)} onImport={importTasks}/>}
+    </div>
+  );
+}
+
+const root=ReactDOM.createRoot(document.getElementById("app"));
+root.render(<App/>);
+</script>
+</body>
+</html>
