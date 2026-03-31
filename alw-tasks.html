@@ -329,8 +329,8 @@ function App(){
           <button key={f} onClick={()=>setFilter(f)} style={{background:filter===f?"#8b5e3c":"white",border:`1.5px solid ${filter===f?"#8b5e3c":"#d4c4b0"}`,color:filter===f?"#fdf8f0":"#7a6a5a",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:10,letterSpacing:1}}>{f.toUpperCase()}</button>
         ))}
         <div style={{marginLeft:"auto",display:"flex",gap:8}}>
-          <button onClick={()=>setImporting(true)} style={{background:"white",border:"1.5px solid #c4a882",color:"#8b5e3c",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:10,letterSpacing:1}}>⚡ IMPORT</button>
-          <button onClick={()=>setAdding(true)} style={{background:"#8b5e3c",border:"1.5px solid #8b5e3c",color:"#fdf8f0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:10,letterSpacing:1}}>+ NEW</button>
+          <button onClick={()=>setImporting(true)} style={{background:"white",border:"1.5px solid #c4a882",color:"#8b5e3c",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:10}}>⚡ IMPORT</button>
+          <button onClick={()=>setAdding(true)} style={{background:"#8b5e3c",border:"1.5px solid #8b5e3c",color:"#fdf8f0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:10}}>+ NEW</button>
         </div>
       </div>
       {adding&&<TaskForm onSave={addTask} onCancel={()=>setAdding(false)}/>}
